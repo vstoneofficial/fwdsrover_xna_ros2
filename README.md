@@ -94,7 +94,7 @@
 - **4WDSローバー（実機）との通信**: ROS 2とMicro-ROSを統合するためのエージェントノードを起動。
   - 有線シリアル接続の場合:
       ```
-      $ ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0 -v4
+      $ ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0 --baudrate 921600 -v4
       ```
   - Wi-Fi 接続の場合:
       ```
