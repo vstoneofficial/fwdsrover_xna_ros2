@@ -1,7 +1,7 @@
-# メカナムローバーVer.3.0 ROS2パッケージ
+# 4WDSローバーX40A ROS2パッケージ
 
 <p align="center">
-  <img src="./images/x40a.png" width="600" />
+  <img src="./images/x40a.jpg" width="600" />
 </p>
 
 ヴイストン株式会社より発売されている全方向移動台車「[4WDSローバーX40A](https://www.vstone.co.jp/products/wheelrobot/x40a.html)」等をROS 2で制御するためのパッケージです。別途Linux搭載のPC及びロボット実機が必要になります。

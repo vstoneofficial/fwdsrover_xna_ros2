@@ -7,9 +7,9 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
-    description_package_path = get_package_share_path('mecanumrover_description')
+    description_package_path = get_package_share_path('fwdsrover_xna_bringup')
     bringup_package_path = get_package_share_path('fwdsrover_xna_bringup')
-    default_model_path = description_package_path / 'urdf/mecanum3.xacro'
+    default_model_path = description_package_path / 'urdf/fwdsroverX40A.xacro'
     default_rviz_config_path = bringup_package_path / 'rviz/fwdsrover_xna.rviz'
     rviz_arg = DeclareLaunchArgument(name='rvizconfig', default_value=str(default_rviz_config_path),
                                      description='Absolute path to rviz config file')
@@ -27,7 +27,7 @@ def generate_launch_description():
         output='screen',
         arguments=['-d', LaunchConfiguration('rvizconfig')],
     )
-    '''
+
     joint_state_publisher_node = Node(
         package='joint_state_publisher',
         executable='joint_state_publisher',
@@ -38,9 +38,9 @@ def generate_launch_description():
         executable='robot_state_publisher',
         parameters=[{'robot_description': robot_description}]
     )
-    '''
+
     pub_odom_node = Node(
-        package='mecanumrover3_bringup',
+        package='fwdsrover_xna_bringup',
         executable='pub_odom',
         name='pub_odom'
     )
@@ -48,8 +48,8 @@ def generate_launch_description():
     return LaunchDescription([
         model_arg,
         rviz_arg,
-        #robot_state_publisher_node,
-        #joint_state_publisher_node,
+        robot_state_publisher_node,
+        joint_state_publisher_node,
         pub_odom_node,
         rviz_node,
     ])

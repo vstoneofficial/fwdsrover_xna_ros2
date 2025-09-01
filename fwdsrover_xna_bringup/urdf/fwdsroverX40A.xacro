@@ -1,0 +1,175 @@
+<?xml version="1.0"?>
+<robot name="fwdsroverX40A" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- ===================== Common params ===================== -->
+  <xacro:property name="base_length" value="0.324"/>
+  <xacro:property name="base_width"  value="0.110"/>
+  <xacro:property name="base_height" value="0.159"/>
+  <xacro:property name="base_mass"   value="16.4"/>
+
+  <xacro:property name="wheel_radius" value="0.07"/>
+  <xacro:property name="wheel_width"  value="0.04"/>
+  <xacro:property name="steer_limit_rad" value="3.0543"/> <!-- ≒175deg -->
+
+  <!-- ===================== Helpers ===================== -->
+  <!-- 直方体近似の慣性を入れる簡易マクロ -->
+  <xacro:macro name="inertial_box" params="mass x y z">
+    <inertial>
+      <mass value="${mass}"/>
+      <!-- 粗い近似（I = m/12 * diag(y^2+z^2, x^2+z^2, x^2+y^2)) -->
+      <inertia
+        ixx="${mass*(y*y+z*z)/12.0}"
+        iyy="${mass*(x*x+z*z)/12.0}"
+        izz="${mass*(x*x+y*y)/12.0}"
+        ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- 車輪モジュール：ステア中間リンク + 車輪リンク + 各ジョイント -->
+  <!-- parent: 親リンク（通常 base_link） -->
+  <!-- steer_link, wheel_link, steer_joint, wheel_joint: 名前 -->
+  <!-- xyz: 親リンクからの取付位置（車軸中心） -->
+  <!-- wheel_radius/width, steer_limit: 寸法・可動域（既定あり） -->
+  <!-- steer_mass, wheel_mass: 質量（既定あり） -->
+  <xacro:macro name="wheel_module"
+               params="parent steer_link wheel_link steer_joint wheel_joint
+                       xyz:='0 0 0'
+                       wheel_radius:='${wheel_radius}'
+                       wheel_width:='${wheel_width}'
+                       steer_limit:='${steer_limit_rad}'
+                       steer_mass:='2.0'
+                       wheel_mass:='1.0'">
+
+    <!-- ステア中間リンク -->
+    <link name="${steer_link}">
+      <xacro:inertial_box mass="${steer_mass}" x="0.02" y="0.02" z="0.02"/>
+      <visual>
+        <origin xyz="0 0 0"/>
+        <geometry><cylinder radius="0.03" length="0.02"/></geometry>
+        <material name="gray"><color rgba="0.6 0.6 0.6 1"/></material>
+      </visual>
+    </link>
+
+    <!-- 親 → ステア回転（Z軸） -->
+    <joint name="${steer_joint}" type="revolute">
+      <parent link="${parent}"/>
+      <child  link="${steer_link}"/>
+      <origin xyz="${xyz}" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="-${steer_limit}" upper="${steer_limit}" effort="10" velocity="1.5"/>
+    </joint>
+
+    <!-- 駆動ホイール -->
+    <link name="${wheel_link}">
+      <inertial>
+        <origin xyz="0 0 0"/>
+        <mass value="${wheel_mass}"/>
+        <!-- 円柱近似の慣性（半径=wheel_radius, 長さ=wheel_width） -->
+        <inertia
+          ixx="0"
+          iyy="0"
+          izz="0"
+          ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+        <material name="black"><color rgba="0.05 0.05 0.05 1"/></material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+      </collision>
+    </link>
+
+    <!-- ステア → ホイール回転 -->
+    <joint name="${wheel_joint}" type="continuous">
+      <parent link="${steer_link}"/>
+      <child  link="${wheel_link}"/>
+      <origin xyz="0 0 -0.1" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <dynamics friction="0.0" damping="0.0"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- ===================== Base frames ===================== -->
+  <link name="base_footprint"/>
+  <link name="base_link">
+    <origin xyz="0 0 0"/>
+    <xacro:inertial_box mass="${base_mass}" x="${base_length}" y="${base_width}" z="${base_height}"/>
+    <visual>
+      <origin xyz="0 0 ${base_height/2.0}"/>
+      <geometry>
+      	<box size="${base_length} ${base_width} ${base_height}"/>
+      </geometry>
+      <material name="gray"><color rgba="0.6 0.6 0.6 1"/></material>
+    </visual>
+    <visual>
+      <origin xyz="0 0 ${base_height/2.0}"/>
+      <geometry>
+      	<box size="${base_width} ${base_length} ${base_height}"/>
+      </geometry>
+      <material name="gray"><color rgba="0.6 0.6 0.6 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${base_height/2.0}"/>
+      <geometry><box size="${base_length} ${base_width} ${base_height}"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="base_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child  link="base_link"/>
+    <origin xyz="0 0 0.04" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ===================== Sensors ===================== -->
+  <link name="f_laser_link">
+    <visual><origin xyz="0 0 0"/><geometry><cylinder radius="0.035" length="0.034"/></geometry></visual>
+  </link>
+  <joint name="f_laser_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="f_laser_link"/>
+    <origin xyz="${ base_length/2.0 + 0.072 } 0 ${base_height + 0.03}" rpy="0 0 0"/>
+  </joint>
+
+  <link name="r_laser_link">
+    <visual><origin xyz="0 0 0"/><geometry><cylinder radius="0.035" length="0.034"/></geometry></visual>
+  </link>
+  <joint name="r_laser_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="r_laser_link"/>
+    <origin xyz="${ -base_length/2.0 - 0.072 } 0 ${base_height + 0.03}" rpy="0 0 3.14159"/>
+  </joint>
+
+  <!-- ===================== Wheels (instantiate 4 modules) ===================== -->
+  <!-- ホイールベース/トレッド -->
+  <xacro:property name="x_off" value="0.125"/>
+  <xacro:property name="y_off" value="0.125"/>
+  <xacro:property name="axle_height" value="0.13"/>
+
+  <!-- FL -->
+  <xacro:wheel_module parent="base_link"
+                      steer_link="fl_steer" wheel_link="fl_wheel"
+                      steer_joint="fl_steer_joint" wheel_joint="fl_wheel_joint"
+                      xyz="${x_off} ${y_off} ${axle_height}"/>
+
+  <!-- FR -->
+  <xacro:wheel_module parent="base_link"
+                      steer_link="fr_steer" wheel_link="fr_wheel"
+                      steer_joint="fr_steer_joint" wheel_joint="fr_wheel_joint"
+                      xyz="${x_off} ${-y_off} ${axle_height}"/>
+
+  <!-- RL -->
+  <xacro:wheel_module parent="base_link"
+                      steer_link="rl_steer" wheel_link="rl_wheel"
+                      steer_joint="rl_steer_joint" wheel_joint="rl_wheel_joint"
+                      xyz="${-x_off} ${y_off} ${axle_height}"/>
+
+  <!-- RR -->
+  <xacro:wheel_module parent="base_link"
+                      steer_link="rr_steer" wheel_link="rr_wheel"
+                      steer_joint="rr_steer_joint" wheel_joint="rr_wheel_joint"
+                      xyz="${-x_off} ${-y_off} ${axle_height}"/>
+
+</robot>
