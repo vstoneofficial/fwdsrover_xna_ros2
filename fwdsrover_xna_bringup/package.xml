@@ -3,26 +3,30 @@
 <package format="3">
   <name>fwdsrover_xna_bringup</name>
   <version>1.0.0</version>
-  <description>Launch files and scripts needed to bring 4WDSrover into a running state.</description>
-  <author email="matsuyama@vstone.co.jp">Matsuyama</author>
+  <description>Launch files and nodes to bring up 4WS rover simulation/control.</description>
+
   <maintainer email="infodesk@vstone.co.jp">Vstone</maintainer>
-  <license>Apache License 2.0</license>
+  <author email="matsuyama@vstone.co.jp">Matsuyama</author>
+  <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
+  <depend>gazebo_msgs</depend>
   <depend>nav_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>tf2</depend>
   <depend>tf2_ros</depend>
   <depend>tf2_geometry_msgs</depend>
-  <depend>teleop_twist_keyboard</depend>
-  <depend>mouse_teleop</depend>
-  <depend>xacro</depend>
 
-  <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_lint_common</test_depend>
+  <!-- 入力源（必要なら） -->
+  <exec_depend>teleop_twist_keyboard</exec_depend>
+  <exec_depend>mouse_teleop</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
   </export>
 </package>
+

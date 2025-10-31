@@ -1,0 +1,419 @@
+<?xml version="1.0"?>
+<robot name="x40a" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+   <xacro:include filename="$(find fwdsrover_description)/urdf/materials.xacro"/>
+   <xacro:include filename="$(find fwdsrover_description)/urdf/x40a.gazebo"/>
+   <xacro:include filename="$(find fwdsrover_description)/urdf/x40a.ros2_control.xacro"/>
+ 
+
+   <xacro:include filename="$(find vs_rover_options_description)/urdf/lrf/tg30_x40a.xacro" />
+ 
+      <!-- <xacro:include filename="$(find vs_rover_options_description)/urdf/bumper/bumper_x40a.xacro" />
+   <xacro:bumperbaseboard prefix="front" parent="base_link" xyz="0 0.20515 0.038" z_dir="180" />
+   <xacro:bumperbaseboard prefix="back" parent="base_link" xyz="0 -0.20515 0.038" z_dir="0" />
+   <xacro:bumperbaseboard prefix="left" parent="base_link" xyz="0.20515 0 0.038" z_dir="90" />
+   <xacro:bumperbaseboard prefix="right" parent="base_link" xyz="-0.20515 0 0.038" z_dir="270" />
+  
+  
+   <xacro:include filename="$(find vs_rover_options_description)/urdf/cam_stay/cam_stay_x40a.xacro" />
+   <xacro:include filename="$(find vs_rover_options_description)/urdf/depth_cam/_d435i.urdf.xacro" />
+   <xacro:sensor_d435i parent="cam_mount_link" use_nominal_extrinsics="true">
+   <origin xyz="0.0295 0 0.0095" rpy="0 0 0" />
+   </xacro:sensor_d435i>-->
+
+
+  <link name="base_footprint" />
+
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="23.5"/>
+      <inertia ixx="0.0552351826" ixy="0.0000793656873" ixz="-0.0000990264311" iyy="0.0549047615" iyz="0.0000320295012" izz="0.0400670354"/>
+  </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/base_link.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/base_link.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+
+
+<link name="front_left_joint_1">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 180"/>
+      <mass value="0.005"/>
+      <inertia ixx="0.02" ixy="0.0" ixz="0.0" iyy="0.02" iyz="0.0" izz="0.02"/>
+  </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/joint.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/joint.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+<link name="front_left_sus_1">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.005"/>
+      <inertia ixx="0.02" ixy="0.0" ixz="0.0" iyy="0.02" iyz="0.0" izz="0.02"/>
+  </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/sus.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/sus.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+<link name="front_left_wheel_1">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="1.239858"/>
+      <inertia ixx="0.000349732561" ixy="0.0000000000000636727503" ixz="0.0" iyy="0.000234227030" iyz="-0.00000000291379755" izz="0.000233605444"/>
+  </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/wheel.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/wheel.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+<link name="front_right_joint_1">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.005"/>
+      <inertia ixx="0.02" ixy="0.0" ixz="0.0" iyy="0.02" iyz="0.0" izz="0.02"/>
+  </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/joint.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/joint.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+<link name="front_right_sus_1">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.005"/>
+      <inertia ixx="0.02" ixy="0.0" ixz="0.0" iyy="0.02" iyz="0.0" izz="0.02"/>
+  </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/sus.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/sus.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+<link name="front_right_wheel_1">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="1.239858"/>
+      <inertia ixx="0.000349732561" ixy="0.0000000000000636727503" ixz="0.0" iyy="0.000234227030" iyz="-0.00000000291379755" izz="0.000233605444"/>
+  </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/wheel.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/wheel.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+<link name="back_right_joint_1">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.005"/>
+      <inertia ixx="0.02" ixy="0.0" ixz="0.0" iyy="0.02" iyz="0.0" izz="0.02"/>
+  </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/joint.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/joint.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+<link name="back_right_sus_1">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.005"/>
+      <inertia ixx="0.02" ixy="0.0" ixz="0.0" iyy="0.02" iyz="0.0" izz="0.02"/>
+  </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/sus.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/sus.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+<link name="back_right_wheel_1">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="1.239858"/>
+      <inertia ixx="0.000349732561" ixy="0.0000000000000636727503" ixz="0.0" iyy="0.000234227030" iyz="-0.00000000291379755" izz="0.000233605444"/>
+  </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/wheel.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/wheel.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+<link name="back_left_joint_1">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.005"/>
+      <inertia ixx="0.02" ixy="0.0" ixz="0.0" iyy="0.02" iyz="0.0" izz="0.02"/>
+  </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/joint.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/joint.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+<link name="back_left_sus_1">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.005"/>
+      <inertia ixx="0.02" ixy="0.0" ixz="0.0" iyy="0.02" iyz="0.0" izz="0.02"/>
+  </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/sus.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/sus.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+<link name="back_left_wheel_1">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="1.239858"/>
+      <inertia ixx="0.000349732561" ixy="0.0000000000000636727503" ixz="0.0" iyy="0.000234227030" iyz="-0.00000000291379755" izz="0.000233605444"/>
+  </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/wheel.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fwdsrover_description/meshes/wheel.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="base_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 ${radians(-90)}"/>
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+  </joint>
+
+  <joint name="front_left_steering_joint" type="revolute">
+    <origin xyz="-0.125 0.125 0.14" rpy="0.0 0.0 ${radians(0)}"/>
+    <axis xyz="0 0 1"/>
+    <parent link="base_link"/>
+    <child link="front_left_joint_1"/>
+    <limit lower="-3.14159" upper="3.14159" effort="3.55" velocity="1.0"/>
+    <dynamics damping="0.1"/>
+  </joint>
+
+  <joint name="front_left_sus_joint" type="prismatic">
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0 0 1"/>
+    <parent link="front_left_joint_1"/>
+    <child link="front_left_sus_1"/>
+    <limit lower="-0.0135" upper="0.0135" effort="300" velocity="1.0"/>
+    <dynamics damping="522.3"/>
+  </joint>
+
+  <joint name="front_left_wheel_joint" type="continuous">
+    <origin xyz="0.0 0.0 -0.07" rpy="0.0 0.0 0.0"/>
+    <axis xyz="-1 0 0"/>
+    <parent link="front_left_sus_1"/>
+    <child link="front_left_wheel_1"/>
+    <limit effort="10" velocity="50000"/>
+    <dynamics damping="0.02"/>
+  </joint>
+
+  <joint name="front_right_steering_joint" type="revolute">
+    <origin xyz="0.125 0.125 0.14" rpy="0.0 0.0 ${radians(180)}"/>
+    <axis xyz="0 0 1"/>
+    <parent link="base_link"/>
+    <child link="front_right_joint_1"/>
+    <limit lower="-3.14159" upper="3.14159" effort="3.55" velocity="1.0"/>
+    <dynamics damping="0.1"/>
+  </joint>
+
+  <joint name="front_right_sus_joint" type="prismatic">
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0 0 1"/>
+    <parent link="front_right_joint_1"/>
+    <child link="front_right_sus_1"/>
+    <limit lower="-0.0135" upper="0.0135" effort="300" velocity="1.0"/>
+    <dynamics damping="522.3"/>
+  </joint>
+
+  <joint name="front_right_wheel_joint" type="continuous">
+    <origin xyz="0.0 0.0 -0.07" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <parent link="front_right_sus_1"/>
+    <child link="front_right_wheel_1"/>
+    <limit effort="10" velocity="50000"/>
+    <dynamics damping="0.02"/>
+  </joint>
+
+  <joint name="back_right_steering_joint" type="revolute">
+    <origin xyz="0.125 -0.125 0.14" rpy="0.0 0.0 ${radians(180)}"/>
+    <axis xyz="0 0 1"/>
+    <parent link="base_link"/>
+    <child link="back_right_joint_1"/>
+    <limit lower="-3.14159" upper="3.14159" effort="3.55" velocity="1.0"/>
+    <dynamics damping="0.1"/>
+  </joint>
+
+  <joint name="back_right_sus_joint" type="prismatic">
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0 0 1"/>
+    <parent link="back_right_joint_1"/>
+    <child link="back_right_sus_1"/>
+    <limit lower="-0.0135" upper="0.0135" effort="300" velocity="1.0"/>
+    <dynamics damping="522.3"/>
+  </joint>
+
+  <joint name="back_right_wheel_joint" type="continuous">
+    <origin xyz="0.0 0.0 -0.07" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <parent link="back_right_sus_1"/>
+    <child link="back_right_wheel_1"/>
+    <limit effort="10" velocity="50000"/>
+    <dynamics damping="0.02"/>
+  </joint>
+
+  <joint name="back_left_steering_joint" type="revolute">
+    <origin xyz="-0.125 -0.125 0.14" rpy="0.0 0.0 ${radians(0)}"/>
+    <axis xyz="0 0 1"/>
+    <parent link="base_link"/>
+    <child link="back_left_joint_1"/>
+    <limit lower="-3.14159" upper="3.14159" effort="3.55" velocity="1.0"/>
+    <dynamics damping="0.1"/>
+  </joint>
+
+  <joint name="back_left_sus_joint" type="prismatic">
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0 0 1"/>
+    <parent link="back_left_joint_1"/>
+    <child link="back_left_sus_1"/>
+    <limit lower="-0.0135" upper="0.0135" effort="300" velocity="1.0"/>
+    <dynamics damping="522.3"/>
+  </joint>
+
+  <joint name="back_left_wheel_joint" type="continuous">
+    <origin xyz="0.0 0.0 -0.07" rpy="0.0 0.0 0.0"/>
+    <axis xyz="-1 0 0"/>
+    <parent link="back_left_sus_1"/>
+    <child link="back_left_wheel_1"/>
+    <limit effort="10" velocity="50000"/>
+    <dynamics damping="0.02"/>
+  </joint>
+
+  <xacro:x40a_ros2_control/>
+  <xacro:x40a_gazebo/>
+</robot>
+

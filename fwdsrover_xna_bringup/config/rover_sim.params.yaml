@@ -1,0 +1,43 @@
+fwdsrover_xna_bringup:
+  ros__parameters:
+    
+    publish_rate: 50.0 # 出力更新周期 [Hz]
+    rover_d: 0.125       # 左右半トレッド[m]（左右車輪の y オフセットの絶対値）
+    rover_hb: 0.250      # 前後ホイールベース[m]（前後車軸の x 距離）
+    wheel_radius: 0.085  # タイヤ半径[m]
+    steer_tau: 0.08
+    wheel_tau: 0.05
+    deadband_linear: 0.005
+    deadband_angular: 0.01
+    precision_digits: 3
+    use_cmd_angular_for_odo: true
+    use_cmd_linear_for_odo:  true
+    use_cmd_always: true
+    max_allowed_angular: 10.0
+    cmd_freshness_s: 0.5
+    cmd_topic: "rover_twist"
+    odo_topic: "rover_odo"
+    sensor_topic: "rover_sensor"
+    joint_states_topic: "joint_states"
+    steer_cmd_topic: "/steer_position_controller/commands"
+    wheel_cmd_topic: "/wheel_velocity_controller/commands"
+
+
+    steer_joint_names:
+      - "front_left_steering_joint"
+      - "front_right_steering_joint"
+      - "back_right_steering_joint"
+      - "back_left_steering_joint"
+
+    sus_joint_names:
+      - "front_left_sus_joint"
+      - "front_right_sus_joint"
+      - "back_right_sus_joint"
+      - "back_left_sus_joint"
+
+    wheel_joint_names:
+      - "front_left_wheel_joint"
+      - "front_right_wheel_joint"
+      - "back_right_wheel_joint"
+      - "back_left_wheel_joint"
+

@@ -1,0 +1,121 @@
+<?xml version="1.0"?>
+<robot name="x40a" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="x40a_gazebo">
+
+    <xacro:property name="body_color"  value="Gazebo/Silver"/>
+    <xacro:property name="wheel_color" value="Gazebo/DarkGrey"/>
+
+    <gazebo>
+      <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
+        <robot_param>robot_description</robot_param>
+        <robot_param_node>robot_state_publisher</robot_param_node>
+        <parameters>$(find fwdsrover_description)/params/controllers.yaml</parameters>
+      </plugin>
+    </gazebo>
+
+    <gazebo reference="base_link">
+      <material>${body_color}</material>
+      <mu1>0.01</mu1>
+      <mu2>0.01</mu2>
+      <self_collide>true</self_collide>
+      <turnGravityOff>false</turnGravityOff>
+    </gazebo>
+
+    <gazebo reference="front_left_joint_1">
+      <material>${body_color}</material>
+      <mu1>0.8</mu1>
+      <mu2>0.8</mu2>
+    </gazebo>
+
+    <gazebo reference="front_left_sus_1">
+      <material>${body_color}</material>
+      <spring_reference>0.0</spring_reference>
+      <spring_stiffness>19600.0</spring_stiffness>
+      <implicitSpringDamper>true</implicitSpringDamper>
+    </gazebo>
+
+    <gazebo reference="front_left_wheel_1">
+      <material>${wheel_color}</material>
+      <mu1>1.0</mu1>
+      <mu2>1.5</mu2>
+      <slip1>0.1</slip1>
+      <slip2>0.1</slip2>
+      <kp>1e6</kp>
+      <kd>1.0</kd>
+    </gazebo>
+
+    <gazebo reference="front_right_joint_1">
+      <material>${body_color}</material>
+      <mu1>0.8</mu1>
+      <mu2>0.8</mu2>
+    </gazebo>
+
+    <gazebo reference="front_right_sus_1">
+      <material>${body_color}</material>
+      <spring_reference>0.0</spring_reference>
+      <spring_stiffness>19600.0</spring_stiffness>
+      <implicitSpringDamper>true</implicitSpringDamper>
+    </gazebo>
+
+    <gazebo reference="front_right_wheel_1">
+      <material>${wheel_color}</material>
+      <mu1>1.0</mu1>
+      <mu2>1.5</mu2>
+      <slip1>0.1</slip1>
+      <slip2>0.1</slip2>
+      <kp>1e6</kp>
+      <kd>1.0</kd>
+
+    </gazebo>
+
+    <gazebo reference="back_right_joint_1">
+      <material>${body_color}</material>
+      <mu1>0.8</mu1>
+      <mu2>0.8</mu2>
+    </gazebo>
+
+    <gazebo reference="back_right_sus_1">
+      <material>${body_color}</material>
+      <spring_reference>0.0</spring_reference>
+      <spring_stiffness>19600.0</spring_stiffness>
+      <implicitSpringDamper>true</implicitSpringDamper>
+    </gazebo>
+
+    <gazebo reference="back_right_wheel_1">
+      <material>${wheel_color}</material>
+      <mu1>1.0</mu1>
+      <mu2>1.5</mu2>
+      <slip1>0.1</slip1>
+      <slip2>0.1</slip2>
+      <kp>1e6</kp>
+      <kd>1.0</kd>
+
+    </gazebo>
+
+    <gazebo reference="back_left_joint_1">
+      <material>${body_color}</material>
+      <mu1>0.8</mu1>
+      <mu2>0.8</mu2>
+    </gazebo>
+
+    <gazebo reference="back_left_sus_1">
+      <material>${body_color}</material>
+      <spring_reference>0.0</spring_reference>
+      <spring_stiffness>19600.0</spring_stiffness>
+      <implicitSpringDamper>true</implicitSpringDamper>
+    </gazebo>
+
+    <gazebo reference="back_left_wheel_1">
+      <material>${wheel_color}</material>
+      <mu1>1.0</mu1>
+      <mu2>1.5</mu2>
+      <slip1>0.1</slip1>
+      <slip2>0.1</slip2>
+      <kp>1e6</kp>
+      <kd>1.0</kd>
+ 
+    </gazebo>
+
+  </xacro:macro>
+</robot>
+
