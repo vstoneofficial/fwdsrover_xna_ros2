@@ -125,6 +125,7 @@
 以下のコマンドを実行して、4WDSローバーのURDFモデルを表示します。
    ```
    ros2 launch fwdsrover_description display.launch.py
+   ```
 
 ### 4WDSローバー（実機）との通信**: ROS 2とMicro-ROSを統合するためのエージェントノードを起動。
 #### 有線シリアル接続の場合:
