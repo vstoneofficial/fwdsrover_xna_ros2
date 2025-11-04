@@ -34,8 +34,8 @@ def _gen_sdf_and_spawn(context, *args, **kwargs):
     # --- Resolve mesh URI
     # If user leaves mesh_uri empty or 'auto', use the packaged Wall1.stl.
     if mesh_uri_in == '' or mesh_uri_in.lower() == 'auto':
-        pkg_share = get_package_share_directory('fwdsrover_description')
-        wall_path = os.path.join(pkg_share, 'meshes', 'gazebo', 'Wall1.stl')
+        pkg_share = get_package_share_directory('fwdsrover_xna_gazebo')
+        wall_path = os.path.join(pkg_share, 'models', 'Wall1.stl')
         mesh_uri  = f'file://{wall_path}'
     else:
         mesh_uri = mesh_uri_in
