@@ -77,6 +77,38 @@ def generate_launch_description():
             'use_sim_time': use_sim_time,
         }.items()
     )
+    
+    # ---------------------------
+    # wall spawn
+    # ---------------------------
+    spawn_wall = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            PathJoinSubstitution([
+            FindPackageShare('fwdsrover_xna_gazebo'),
+             'launch', 'spawn_wall.launch.py'
+             ])
+        ]),
+        launch_arguments={'use_sim_time': use_sim_time}.items()
+    )
+    
+    # ---------------------------
+    # rover_sim_node
+    # ---------------------------
+    rover_sim = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            PathJoinSubstitution([
+            FindPackageShare('fwdsrover_xna_bringup'),
+             'launch', 'rover_sim.launch.py'
+             ])
+        ]),
+        launch_arguments={
+            'use_sim_time': 'true',
+            'cmd_topic': '/rover_twist',
+            'joint_states_topic': '/joint_states',
+            'steer_cmd_topic': '/steer_position_controller/commands',
+            'wheel_cmd_topic': '/wheel_velocity_controller/commands',
+        }.items()
+    )
 
     # ---------------------------
     # Final description (ordering matters)
@@ -92,6 +124,8 @@ def generate_launch_description():
 
         # Sequence
         gazebo_bringup,
+        spawn_wall,
+        rover_sim,
         wait_tf,
         navigation,
     ])

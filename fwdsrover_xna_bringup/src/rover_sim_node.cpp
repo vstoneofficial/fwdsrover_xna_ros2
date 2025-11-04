@@ -206,8 +206,8 @@ private:
     double target_avr_v[4]{}, target_steer[4]{};
     for (int i=0;i<4;++i){
       const double rot_gain = ( (rover_hb*0.5) + rover_d ) / std::sqrt( (rover_hb*0.5)*(rover_hb*0.5) + rover_d*rover_d );
-      const double vwx = cmd_vx - (rot_gain * 1.5 * cmd_w) * pos_y[i];
-      const double vwy = cmd_vy + (rot_gain * 1.5 * cmd_w) * pos_x[i];
+      const double vwx = cmd_vx - (rot_gain * 0.75 * cmd_w) * pos_y[i];
+      const double vwy = cmd_vy + (rot_gain * 0.75 * cmd_w) * pos_x[i];
       const double speed = std::hypot(vwx, vwy);
       double dir = (speed > 1e-6) ? std::atan2(vwy, vwx)
                                   : std::atan2(-pos_x[i], pos_y[i]); 
