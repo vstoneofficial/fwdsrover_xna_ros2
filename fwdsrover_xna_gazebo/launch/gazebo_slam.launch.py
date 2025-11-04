@@ -1,98 +1,83 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch_ros.substitutions import FindPackageShare
 from launch_ros.actions import Node
-
+from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
-    # ---------------------------
-    # Common args (can be overridden at launch)
-    # ---------------------------
-    use_sim_time = LaunchConfiguration('use_sim_time', default='true')   # Use Gazebo /clock
-    gui          = LaunchConfiguration('gui',          default='true')   # Show Gazebo client
-    verbose      = LaunchConfiguration('verbose',      default='false')  # Gazebo verbosity
-    gazebo_pkg   = FindPackageShare('fwdsrover_xna_gazebo')
-
-    # ---------------------------
-    # Navigation-related args
-    #  - default_map points to a packaged map file; replace if your map differs.
-    # ---------------------------
-    default_map = PathJoinSubstitution([gazebo_pkg, 'maps', 'test.yaml'])
-    map_file = LaunchConfiguration('map')
-    params_file = LaunchConfiguration(
-        'params_file',
-        default=PathJoinSubstitution([
-            FindPackageShare('fwdsrover_xna_navigation'),
-            'config', 'nav2_params.yaml'
-        ])
+    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
+    cmd_topic    = LaunchConfiguration('cmd_topic',    default='/rover_twist')
+    model_name   = LaunchConfiguration('model_name',   default='x40a')
+    scan_topic   = LaunchConfiguration('scan_topic',   default='/scan')
+    odom_frame   = LaunchConfiguration('odom_frame',   default='odom')
+    base_frame   = LaunchConfiguration('base_frame',   default='base_footprint')
+    rviz_config  = LaunchConfiguration(
+        'rvizconfig',
+        default=PathJoinSubstitution([get_package_share_directory('fwdsrover_xna_navigation'), 'rviz', 'slam.rviz'])
     )
 
-    # ---------------------------
-    # Gazebo bringup (spawns robot, controllers, and odom bridge)
-    # ---------------------------
+    pkg_desc  = get_package_share_directory('fwdsrover_description')
+    pkg_bring = get_package_share_directory('fwdsrover_xna_bringup')
+    pkg_nav   = get_package_share_directory('fwdsrover_xna_navigation')
+    pkg_gzb   = get_package_share_directory('fwdsrover_xna_gazebo')
+
     gazebo_bringup = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([
-            PathJoinSubstitution([
-                FindPackageShare('fwdsrover_xna_gazebo'),
-                'launch', 'gazebo_bringup.launch.py'
-            ])
-        ]),
+        PythonLaunchDescriptionSource(PathJoinSubstitution([pkg_gzb, 'launch', 'gazebo_bringup.launch.py'])),
+        launch_arguments={'use_sim_time': use_sim_time}.items()
+    )
+
+    spawn_wall = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(PathJoinSubstitution([pkg_gzb, 'launch', 'spawn_wall.launch.py'])),
+        launch_arguments={'use_sim_time': use_sim_time}.items()
+    )
+
+    rover_sim = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(PathJoinSubstitution([pkg_bring, 'launch', 'rover_sim.launch.py'])),
         launch_arguments={
-            'use_sim_time': use_sim_time,
-            'gui': gui,
-            'verbose': verbose,
+            'use_sim_time': 'true',
+            'mode': 'normal',
+            'cmd_topic': cmd_topic,
+            'odo_topic': '/__unused_rover_odo',
+            'joint_states_topic': '/joint_states',
+            'steer_cmd_topic': '/steer_position_controller/commands',
+            'wheel_cmd_topic': '/wheel_velocity_controller/commands',
         }.items()
     )
 
-    # ---------------------------
-    # Wait for TF(odom -> base_footprint) exactly once, then exit
-    # Ensures Nav2 starts only after the odom bridge publishes TF.
-    # ---------------------------
-    wait_tf = Node(
-        package='tf2_ros',
-        executable='tf2_echo',
-        arguments=['--once', 'odom', 'base_footprint'],
-        output='screen'
-    )
-
-    # ---------------------------
-    # Nav2 stack (map_server, AMCL, planners, controller, RViz via your file)
-    # Expects a static occupancy map YAML (map:=...) and params YAML.
-    # ---------------------------
-    navigation = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([
-            PathJoinSubstitution([
-                FindPackageShare('fwdsrover_xna_navigation'),
-                'launch', 'navigation.launch.py'
-            ])
-        ]),
-        launch_arguments={
-            'map': map_file,
-            'params_file': params_file,
+    gazebo_odom_bridge = Node(
+        package='fwdsrover_xna_bringup',
+        executable='gazebo_odom_bridge',
+        name='gazebo_odom_bridge',
+        output='screen',
+        parameters=[{
             'use_sim_time': use_sim_time,
-        }.items()
+            'model_name': model_name,
+            'odom_frame': odom_frame,
+            'base_frame': base_frame,
+            'publish_tf': True,
+            'flatten_to_2d': True
+        }],
     )
 
-    # ---------------------------
-    # Final description (ordering matters)
-    #   Gazebo → TF wait → Nav2
-    # ---------------------------
+    slam_and_rviz = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(PathJoinSubstitution([pkg_nav, 'launch', 'slam.launch.py'])),
+        launch_arguments={'rvizconfig': rviz_config}.items()
+    )
+
     return LaunchDescription([
-        # User arguments
-        DeclareLaunchArgument('use_sim_time', default_value='true',  description='Use /clock from Gazebo'),
-        DeclareLaunchArgument('gui',          default_value='true',  description='Launch Gazebo client'),
-        DeclareLaunchArgument('verbose',      default_value='false', description='Gazebo verbose logging'),
-        DeclareLaunchArgument('map',          default_value=default_map, description='Full path to map YAML'),
-        DeclareLaunchArgument('params_file',  default_value=params_file,  description='Nav2 params YAML'),
+        DeclareLaunchArgument('use_sim_time', default_value='true'),
+        DeclareLaunchArgument('cmd_topic',    default_value='/rover_twist'),
+        DeclareLaunchArgument('model_name',   default_value='x40a'),
+        DeclareLaunchArgument('scan_topic',   default_value='/scan'),
+        DeclareLaunchArgument('odom_frame',   default_value='odom'),
+        DeclareLaunchArgument('base_frame',   default_value='base_footprint'),
+        DeclareLaunchArgument('rvizconfig',   default_value=PathJoinSubstitution([pkg_nav, 'rviz', 'slam.rviz'])),
 
-        # Sequence
         gazebo_bringup,
-        wait_tf,
-        navigation,
+        spawn_wall,
+        rover_sim,
+        gazebo_odom_bridge,
+        slam_and_rviz,
     ])
-
