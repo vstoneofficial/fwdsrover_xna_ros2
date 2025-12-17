@@ -1,132 +1,140 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import ( LaunchConfiguration, PathJoinSubstitution, PythonExpression,)
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.substitutions import FindPackageShare
-from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    # ---------------------------
-    # Common args (can be overridden at launch)
-    # ---------------------------
-    use_sim_time = LaunchConfiguration('use_sim_time', default='true')   # Use Gazebo /clock
-    gui          = LaunchConfiguration('gui',          default='true')   # Show Gazebo client
-    verbose      = LaunchConfiguration('verbose',      default='false')  # Gazebo verbosity
-    gazebo_pkg   = FindPackageShare('fwdsrover_xna_gazebo')
 
-    # ---------------------------
-    # Navigation-related args
-    #  - default_map points to a packaged map file; replace if your map differs.
-    # ---------------------------
-    default_map = PathJoinSubstitution([gazebo_pkg, 'maps', 'test.yaml'])
-    map_file = LaunchConfiguration('map')
-    params_file = LaunchConfiguration(
-        'params_file',
-        default=PathJoinSubstitution([
-            FindPackageShare('fwdsrover_xna_navigation'),
-            'config', 'nav2_params.yaml'
-        ])
-    )
+    # --------------------------------------------------
+    # Launch arguments
+    # --------------------------------------------------
+    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
+    gui          = LaunchConfiguration('gui', default='true')
+    verbose      = LaunchConfiguration('verbose', default='false')
+    rover        = LaunchConfiguration('rover', default='x40a')
+    map_file     = LaunchConfiguration('map')
+    wall         = LaunchConfiguration('wall')
 
-    # ---------------------------
-    # Gazebo bringup (spawns robot, controllers, and odom bridge)
-    # ---------------------------
+    # --------------------------------------------------
+    # Package shares
+    # --------------------------------------------------
+    gazebo_pkg = FindPackageShare('fwdsrover_xna_gazebo')
+    nav_pkg    = FindPackageShare('fwdsrover_xna_navigation')
+
+    # --------------------------------------------------
+    # Default map (FULL PATH)
+    # --------------------------------------------------
+    default_map = PathJoinSubstitution([
+        nav_pkg,
+        'maps',
+        'test.yaml'
+    ])
+
+    # --------------------------------------------------
+    # Auto-select Nav2 params by rover type
+    # --------------------------------------------------
+    auto_params_file = PythonExpression([
+        '"', nav_pkg, '/config/',
+        '" + ("x40a_nav2_params.yaml" if "', rover,
+        '" == "x40a" else "x120a_nav2_params.yaml")'
+    ])
+
+    # --------------------------------------------------
+    # Gazebo bringup (robot + world)
+    # --------------------------------------------------
     gazebo_bringup = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([
+        PythonLaunchDescriptionSource(
             PathJoinSubstitution([
-                FindPackageShare('fwdsrover_xna_gazebo'),
-                'launch', 'gazebo_bringup.launch.py'
+                gazebo_pkg,
+                'launch',
+                'gazebo_bringup.launch.py'
             ])
-        ]),
+        ),
         launch_arguments={
             'use_sim_time': use_sim_time,
             'gui': gui,
             'verbose': verbose,
+            'rover': rover,
         }.items()
     )
 
-    # ---------------------------
-    # Wait for TF(odom -> base_footprint) exactly once, then exit
-    # Ensures Nav2 starts only after the odom bridge publishes TF.
-    # ---------------------------
-    wait_tf = Node(
-        package='tf2_ros',
-        executable='tf2_echo',
-        arguments=['--once', 'odom', 'base_footprint'],
-        output='screen'
+    # --------------------------------------------------
+    # Wall spawn (static object)
+    # --------------------------------------------------
+    spawn_wall = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                gazebo_pkg,
+                'launch',
+                'spawn_wall.launch.py'
+            ])
+        ),
+        launch_arguments={
+            'mesh_uri': wall,
+        }.items()
     )
 
-    # ---------------------------
-    # Nav2 stack (map_server, AMCL, planners, controller, RViz via your file)
-    # Expects a static occupancy map YAML (map:=...) and params YAML.
-    # ---------------------------
+    # --------------------------------------------------
+    # Navigation (Nav2)
+    # params_file is explicitly passed
+    # --------------------------------------------------
     navigation = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([
+        PythonLaunchDescriptionSource(
             PathJoinSubstitution([
-                FindPackageShare('fwdsrover_xna_navigation'),
-                'launch', 'navigation.launch.py'
+                nav_pkg,
+                'launch',
+                'navigation.launch.py'
             ])
-        ]),
+        ),
         launch_arguments={
             'map': map_file,
-            'params_file': params_file,
+            'params_file': auto_params_file,
             'use_sim_time': use_sim_time,
         }.items()
     )
-    
-    # ---------------------------
-    # wall spawn
-    # ---------------------------
-    spawn_wall = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([
-            PathJoinSubstitution([
-            FindPackageShare('fwdsrover_xna_gazebo'),
-             'launch', 'spawn_wall.launch.py'
-             ])
-        ]),
-        launch_arguments={'use_sim_time': use_sim_time}.items()
-    )
-    
-    # ---------------------------
-    # rover_sim_node
-    # ---------------------------
-    rover_sim = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([
-            PathJoinSubstitution([
-            FindPackageShare('fwdsrover_xna_bringup'),
-             'launch', 'rover_sim.launch.py'
-             ])
-        ]),
-        launch_arguments={
-            'use_sim_time': 'true',
-            'cmd_topic': '/rover_twist',
-            'joint_states_topic': '/joint_states',
-            'steer_cmd_topic': '/steer_position_controller/commands',
-            'wheel_cmd_topic': '/wheel_velocity_controller/commands',
-        }.items()
-    )
 
-    # ---------------------------
-    # Final description (ordering matters)
-    #   Gazebo → TF wait → Nav2
-    # ---------------------------
+    # --------------------------------------------------
+    # Launch description
+    # --------------------------------------------------
     return LaunchDescription([
-        # User arguments
-        DeclareLaunchArgument('use_sim_time', default_value='true',  description='Use /clock from Gazebo'),
-        DeclareLaunchArgument('gui',          default_value='true',  description='Launch Gazebo client'),
-        DeclareLaunchArgument('verbose',      default_value='false', description='Gazebo verbose logging'),
-        DeclareLaunchArgument('map',          default_value=default_map, description='Full path to map YAML'),
-        DeclareLaunchArgument('params_file',  default_value=params_file,  description='Nav2 params YAML'),
 
-        # Sequence
+        DeclareLaunchArgument(
+            'rover',
+            default_value='x40a',
+            description='Rover type: x40a or x120a'
+        ),
+
+        DeclareLaunchArgument(
+            'use_sim_time',
+            default_value='true'
+        ),
+
+        DeclareLaunchArgument(
+            'gui',
+            default_value='true'
+        ),
+
+        DeclareLaunchArgument(
+            'verbose',
+            default_value='false'
+        ),
+
+        DeclareLaunchArgument(
+            'map',
+            default_value=default_map,
+            description='Full path to map yaml'
+        ),
+
+        DeclareLaunchArgument(
+            'wall',
+            default_value='',
+            description='Wall STL filename (e.g. Wall.stl, Wall2.stl)'
+        ),
+
         gazebo_bringup,
         spawn_wall,
-        rover_sim,
-        wait_tf,
         navigation,
     ])
 

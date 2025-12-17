@@ -20,8 +20,9 @@ public:
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
     sub_ = create_subscription<gazebo_msgs::msg::ModelStates>(
-      "/gazebo/model_states", rclcpp::QoS(10),
+      "/model_states", rclcpp::QoS(10),
       std::bind(&GazeboOdomBridge::cb, this, std::placeholders::_1));
+
   }
 
 private:

@@ -1,42 +1,104 @@
-from ament_index_python.packages import get_package_share_path
-from launch.actions import DeclareLaunchArgument
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import (
+    Command,
+    LaunchConfiguration,
+    PythonExpression,
+    PathJoinSubstitution,
+)
 from launch_ros.actions import Node
-from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
-    description_package_path = get_package_share_path('fwdsrover_description')
-    bringup_package_path = get_package_share_path('fwdsrover_xna_bringup')
-    default_model_path = description_package_path / 'urdf/x40a.xacro'
-    default_rviz_config_path = bringup_package_path / 'rviz/fwdsrover_xna.rviz'
-    
+
+    # --------------------------------------------------
+    # Package paths (MUST be string, not PosixPath)
+    # --------------------------------------------------
+    description_pkg = get_package_share_directory('fwdsrover_description')
+    bringup_pkg     = get_package_share_directory('fwdsrover_xna_bringup')
+
+    # --------------------------------------------------
+    # Launch arguments
+    # --------------------------------------------------
+    rover = LaunchConfiguration('rover')
+
     use_sim_time_arg = DeclareLaunchArgument(
-        name='use_sim_time', default_value='false',
+        'use_sim_time',
+        default_value='false',
         description='Use simulation time if available'
     )
-    
-    mode_arg = DeclareLaunchArgument(
-        'mode', default_value='normal',
-        description="Operation mode for rover_sim_node: 'normal' or 'odo_driven'"
+
+    rover_arg = DeclareLaunchArgument(
+        'rover',
+        default_value='x40a',
+        description='Rover type: x40a or x120a'
     )
-    
+
     rviz_arg = DeclareLaunchArgument(
-        name='rvizconfig', default_value=str(default_rviz_config_path),
+        'rvizconfig',
+        default_value=PathJoinSubstitution([
+            bringup_pkg, 'rviz', 'fwdsrover_xna.rviz'
+        ]),
         description='Absolute path to rviz config file'
     )
 
-    model_arg = DeclareLaunchArgument(
-        name='model', default_value=str(default_model_path),
-        description='Absolute path to robot urdf file'
-    )
+    # --------------------------------------------------
+    # Select xacro by rover type (string only)
+    # --------------------------------------------------
+    model_path = PythonExpression([
+        '"', description_pkg, '/urdf/" + ',
+        '("x40a.xacro" if "', rover, '" == "x40a" else "x120a.xacro")'
+    ])
 
+    # --------------------------------------------------
+    # Robot description (xacro)
+    # --------------------------------------------------
     robot_description = ParameterValue(
-        Command(['xacro ', LaunchConfiguration('model')]),
+        Command(['xacro ', model_path]),
         value_type=str
     )
-    
+
+    # --------------------------------------------------
+    # Robot state publisher
+    # --------------------------------------------------
+    robot_state_publisher_node = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        output='screen',
+        parameters=[{
+            'use_sim_time': LaunchConfiguration('use_sim_time'),
+            'robot_description': robot_description,
+        }],
+    )
+
+    # --------------------------------------------------
+    # Odometry publisher
+    # --------------------------------------------------
+    pub_odom_node = Node(
+        package='fwdsrover_xna_bringup',
+        executable='pub_odom',
+        name='pub_odom',
+        output='screen',
+        parameters=[{
+            'use_sim_time': LaunchConfiguration('use_sim_time'),
+        }],
+    )
+
+    # --------------------------------------------------
+    # Static TF (odom -> base_footprint)
+    # --------------------------------------------------
+    odom_static_tf = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='odom_static',
+        arguments=['0', '0', '0', '0', '0', '0', 'odom', 'base_footprint'],
+    )
+
+    # --------------------------------------------------
+    # RViz
+    # --------------------------------------------------
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
@@ -45,58 +107,16 @@ def generate_launch_description():
         arguments=['-d', LaunchConfiguration('rvizconfig')],
     )
 
-    rover_sim_node = Node(
-        package='fwdsrover_xna_bringup',
-        executable='rover_sim_node',
-        name='rover_sim_node',
-        output='screen',
-        parameters=[{
-            'use_sim_time': LaunchConfiguration('use_sim_time'),
-            'cmd_topic': '/rover_twist',
-            'joint_states_topic': '/joint_states', 
-            'steer_cmd_topic': '/steer_position_controller/commands',
-            'wheel_cmd_topic': '/wheel_velocity_controller/commands',
-            
-            #
-            'mode': LaunchConfiguration('mode'),
-            'operation_mode': LaunchConfiguration('mode'),
-            
-            }],
-    )
-    
-    robot_state_publisher_node = Node(
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        parameters=[{
-            'use_sim_time': LaunchConfiguration('use_sim_time'),
-            'robot_description': robot_description,}],
-    )
-
-    pub_odom_node = Node(
-        package='fwdsrover_xna_bringup',
-        executable='pub_odom',
-        name='pub_odom',
-        parameters=[{
-            'use_sim_time': LaunchConfiguration('use_sim_time'),
-        }]
-    )
-    
-    odom_static_tf = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='odom_static',
-        arguments=['0','0','0','0','0','0','odom','base_footprint'],
-        condition=None,  
-    )
-
+    # --------------------------------------------------
+    # Launch description
+    # --------------------------------------------------
     return LaunchDescription([
         use_sim_time_arg,
-        mode_arg,
-        model_arg,
+        rover_arg,
         rviz_arg,
         robot_state_publisher_node,
-        rover_sim_node,
         pub_odom_node,
         odom_static_tf,
         rviz_node,
     ])
+

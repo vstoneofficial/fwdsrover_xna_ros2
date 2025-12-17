@@ -32,7 +32,7 @@ def generate_launch_description():
         default=os.path.join(
             get_package_share_directory('fwdsrover_xna_navigation'),
             'maps',
-            'test22.yaml'))  # change this to your own map for navigation
+            'test.yaml'))  # change this to your own map for navigation
 
     param_dir = LaunchConfiguration(
         'params_file',

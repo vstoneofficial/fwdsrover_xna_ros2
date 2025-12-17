@@ -12,10 +12,10 @@ find_package(nav_msgs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2 REQUIRED)
-find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(gazebo_msgs REQUIRED)
 
+# pub_odom
 add_executable(pub_odom src/pub_odom.cpp)
 ament_target_dependencies(
   pub_odom
@@ -27,38 +27,47 @@ ament_target_dependencies(
   tf2
 )
 
-add_executable(rover_sim_node src/rover_sim_node.cpp)
+# rover_gamepad
+add_executable(rover_gamepad src/rover_gamepad.cpp)
 ament_target_dependencies(
-  rover_sim_node
+  rover_gamepad
   rclcpp
   geometry_msgs
-  std_msgs
   sensor_msgs
 )
 
+# rover_gamepad_tty
+add_executable(rover_gamepad_tty src/rover_gamepad.cpp)
+ament_target_dependencies(
+  rover_gamepad_tty
+  rclcpp
+  geometry_msgs
+  sensor_msgs
+)
+
+# gazebo_odom_bridge
 add_executable(gazebo_odom_bridge src/gazebo_odom_bridge.cpp)
 ament_target_dependencies(
   gazebo_odom_bridge
   rclcpp
-  nav_msgs
   geometry_msgs
-  gazebo_msgs
+  nav_msgs
+  tf2_geometry_msgs
   tf2_ros
+  tf2
+  gazebo_msgs
 )
 
 install(TARGETS
   pub_odom
-  rover_sim_node
+  rover_gamepad
+  rover_gamepad_tty
   gazebo_odom_bridge
   DESTINATION lib/${PROJECT_NAME}
 )
 
 install(
-  DIRECTORY
-  launch
-  rviz
-  config
-  params
+  DIRECTORY launch rviz params
   DESTINATION share/${PROJECT_NAME}
 )
 

@@ -1,78 +1,110 @@
 from ament_index_python.packages import get_package_share_path
-from launch.actions import DeclareLaunchArgument
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import Command, LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
-from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.parameter_descriptions import ParameterValue
-from launch.actions import IncludeLaunchDescription
-from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import PathJoinSubstitution
-from launch_ros.substitutions import FindPackageShare
-
 
 
 def generate_launch_description():
-    description_package_path = get_package_share_path('fwdsrover_description')
-    bringup_package_path = get_package_share_path('fwdsrover_xna_bringup')
-    default_model_path = description_package_path / 'urdf/x40a.xacro'
-    default_rviz_config_path = bringup_package_path / 'rviz/laser.rviz'
-    
-    use_sim_time_arg = DeclareLaunchArgument(
-        name='use_sim_time', default_value='false',
-        description='Use simulation time if available'
+
+    # --------------------------------------------------
+    # Package paths (convert Path -> str)
+    # --------------------------------------------------
+    desc_pkg = str(get_package_share_path('fwdsrover_description'))
+    bringup_pkg = str(get_package_share_path('fwdsrover_xna_bringup'))
+
+    # --------------------------------------------------
+    # Launch arguments
+    # --------------------------------------------------
+    use_sim_time = LaunchConfiguration('use_sim_time', default='false')
+    rover = LaunchConfiguration('rover', default='x40a')
+
+    # --------------------------------------------------
+    # URDF (xacro) selection by rover type
+    # --------------------------------------------------
+    model_path = PythonExpression([
+        '"', desc_pkg, '/urdf/',
+        '" + ("x40a.xacro" if "', rover, '" == "x40a" else "x120a.xacro")'
+    ])
+
+    # --------------------------------------------------
+    # RViz config
+    # --------------------------------------------------
+    default_rviz = bringup_pkg + '/rviz/laser.rviz'
+    rvizconfig = LaunchConfiguration('rvizconfig', default=default_rviz)
+
+    # --------------------------------------------------
+    # Robot description
+    # --------------------------------------------------
+    robot_description = ParameterValue(
+        Command(['xacro ', model_path]),
+        value_type=str
     )
-    
-    rviz_arg = DeclareLaunchArgument(name='rvizconfig', default_value=str(default_rviz_config_path),
-                                     description='Absolute path to rviz config file')
 
-    model_arg = DeclareLaunchArgument(name='model', default_value=str(default_model_path),
-                                      description='Absolute path to robot urdf file')
+    # --------------------------------------------------
+    # Nodes
+    # --------------------------------------------------
+    robot_state_publisher = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        output='screen',
+        parameters=[{
+            'use_sim_time': use_sim_time,
+            'robot_description': robot_description,
+        }],
+    )
 
-    robot_description = ParameterValue(Command(['xacro ', LaunchConfiguration('model')]),
-                                       value_type=str)
-    
-    rviz_node = Node(
+    joint_state_publisher = Node(
+        package='joint_state_publisher',
+        executable='joint_state_publisher',
+        output='screen',
+    )
+
+    pub_odom = Node(
+        package='fwdsrover_xna_bringup',
+        executable='pub_odom',
+        name='pub_odom',
+        output='screen',
+        parameters=[{
+            'use_sim_time': use_sim_time,
+        }],
+    )
+
+    rviz = Node(
         package='rviz2',
         executable='rviz2',
         name='rviz2',
         output='screen',
-        arguments=['-d', LaunchConfiguration('rvizconfig')],
+        arguments=['-d', rvizconfig],
     )
 
-    joint_state_publisher_node = Node(
-        package='joint_state_publisher',
-        executable='joint_state_publisher',
-    )
-    
-    robot_state_publisher_node = Node(
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        parameters=[{'robot_description': robot_description}]
-    )
-
-    pub_odom_node = Node(
-        package='fwdsrover_xna_bringup',
-        executable='pub_odom',
-        name='pub_odom'
-    )
-
-    launch_ydlidar = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([
-            PathJoinSubstitution([
-                FindPackageShare('fwdsrover_xna_bringup'),
-                'launch',
-                'ydlidar_tg30_launch.py'
-            ])
-        ]),
-    )
-
+    # --------------------------------------------------
+    # Launch description
+    # --------------------------------------------------
     return LaunchDescription([
-        use_sim_time_arg,
-        model_arg,
-        rviz_arg,
-        robot_state_publisher_node,
-        joint_state_publisher_node,
-        pub_odom_node,
-        launch_ydlidar, 
-        rviz_node,  # start rviz with slam/navigation launch file
+
+        DeclareLaunchArgument(
+            'use_sim_time',
+            default_value='false',
+            description='Use simulation time'
+        ),
+
+        DeclareLaunchArgument(
+            'rover',
+            default_value='x40a',
+            description='Rover type: x40a or x120a'
+        ),
+
+        DeclareLaunchArgument(
+            'rvizconfig',
+            default_value=default_rviz,
+            description='Absolute path to rviz config file'
+        ),
+
+        robot_state_publisher,
+        joint_state_publisher,
+        pub_odom,
+        rviz,
     ])
+
