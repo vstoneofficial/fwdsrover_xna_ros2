@@ -1,21 +1,5 @@
-# Copyright 2019 Open Source Robotics Foundation, Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# Author: Darby Lim
 
 import os
-
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
@@ -23,9 +7,13 @@ from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch.conditions import IfCondition, LaunchConfigurationEquals
 
 
 def generate_launch_description():
+    nav2_launch_file_dir = os.path.join(
+        get_package_share_directory('fwdsrover_xna_navigation'), 'launch')
+        
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
     map_dir = LaunchConfiguration(
         'map',
@@ -34,15 +22,20 @@ def generate_launch_description():
             'maps',
             'test.yaml'))  # change this to your own map for navigation
 
-    param_dir = LaunchConfiguration(
+    x40a_param_dir = LaunchConfiguration(
         'params_file',
         default=os.path.join(
             get_package_share_directory('fwdsrover_xna_navigation'),
             'config',
-            'nav2_params.yaml'))
+            'x40a_nav2_params.yaml'))
 
-    nav2_launch_file_dir = os.path.join(get_package_share_directory('fwdsrover_xna_navigation'), 'launch')
-
+    x120a_param_dir = LaunchConfiguration(
+        'params_file',
+        default=os.path.join(
+            get_package_share_directory('fwdsrover_xna_navigation'),
+            'config',
+            'x120a_nav2_params.yaml'))
+            
     rviz_config_dir = os.path.join(
         get_package_share_directory('fwdsrover_xna_navigation'),
         'rviz',
@@ -50,26 +43,51 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument(
+            'rover',
+            default_value='x40a',
+            description='fwdsrover model',
+            choices=['x40a', 'x120a']),
+            
+        DeclareLaunchArgument(
             'map',
             default_value=map_dir,
             description='Full path to map file to load'),
-
-        DeclareLaunchArgument(
-            'params_file',
-            default_value=param_dir,
-            description='Full path to param file to load'),
-
+            
         DeclareLaunchArgument(
             'use_sim_time',
             default_value='false',
             description='Use simulation (Gazebo) clock if true'),
+            
+        DeclareLaunchArgument(
+            'params_file',
+            condition=LaunchConfigurationEquals('rover', 'x40a'),
+            default_value=x40a_param_dir,
+            description='Full path to param file to load'),
+            
+        DeclareLaunchArgument(
+            'params_file',
+            condition=LaunchConfigurationEquals('rover', 'x120a'),
+            default_value=x120a_param_dir,
+            description='Full path to param file to load'),
 
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([nav2_launch_file_dir, '/bringup_launch.py']),
+            PythonLaunchDescriptionSource(
+                [nav2_launch_file_dir, '/bringup_launch.py']),
+            condition=LaunchConfigurationEquals('rover', 'x40a'),
             launch_arguments={
                 'map': map_dir,
                 'use_sim_time': use_sim_time,
-                'params_file': param_dir}.items(),
+                'params_file': x40a_param_dir}.items(),
+        ),
+
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                [nav2_launch_file_dir, '/bringup_launch.py']),
+            condition=LaunchConfigurationEquals('rover', 'x120a'),
+            launch_arguments={
+                'map': map_dir,
+                'use_sim_time': use_sim_time,
+                'params_file': x120a_param_dir}.items(),
         ),
 
         Node(

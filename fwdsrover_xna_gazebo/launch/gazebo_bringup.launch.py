@@ -176,7 +176,7 @@ def generate_launch_description():
         parameters=[
             os.path.join(
                 get_package_share_directory("fwdsrover_description"),
-                "params",
+                "scripts",
                 "rover_twist_relay.yaml",
             ),
             {

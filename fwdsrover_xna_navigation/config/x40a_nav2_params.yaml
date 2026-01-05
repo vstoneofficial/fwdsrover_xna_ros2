@@ -144,12 +144,13 @@ controller_server:
       debug_trajectory_details: True
       min_vel_x: -0.02
       min_vel_y: -0.02
-      max_vel_x: 0.35
+      max_vel_x: 0.1
       max_vel_y: 0.02 # Holonomic
-      max_vel_theta: 0.6
+      max_vel_theta: 0.3
       min_speed_xy: 0.0
-      max_speed_xy: 0.35
+      max_speed_xy: 0.1
       min_speed_theta: 0.0
+      max_speed_theta: 0.3
       # Increase stopped velocity threshold to avoid false detection of stopped state.
       # Adjusted for smoother operation in holonomic or high-precision robots.
       acc_lim_x: 2.5
@@ -266,7 +267,7 @@ map_server:
     # When using a launch file with the 'map:=' substitution (e.g. nav_robot.launch.py),
     # that value will override this setting.
     # Set the full path to your desired map YAML file below.
-    yaml_filename: "~/ros2_ws/src/mecanumrover3_ros2/mecanumrover3_navigation/maps/MAP_NAME.yaml"
+    yaml_filename: "~/ros2_ws/src/fwdsrover_xna_ros2/fwdsrover_xna_navigation/maps/MAP_NAME.yaml"
     topic_name: "map"
     frame_id: "map"
 
