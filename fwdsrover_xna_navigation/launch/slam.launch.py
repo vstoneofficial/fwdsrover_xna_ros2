@@ -1,0 +1,42 @@
+from ament_index_python.packages import get_package_share_path
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch_ros.substitutions import FindPackageShare
+from launch import LaunchDescription
+from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch_ros.actions import Node
+
+
+
+def generate_launch_description():
+    rviz_config_path = get_package_share_path('fwdsrover_xna_navigation') / 'rviz/slam.rviz'
+
+    rviz_arg = DeclareLaunchArgument(name='rvizconfig', default_value=str(rviz_config_path),
+                                    description='Absolute path to rviz config file')
+
+    rviz_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        output='screen',
+        arguments=['-d', LaunchConfiguration('rvizconfig')],
+    )
+
+    launch_slam = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource([
+                PathJoinSubstitution([
+                    FindPackageShare('fwdsrover_xna_navigation'),
+                    'launch',
+                    'online_async_launch.py'
+                ])
+            ]),
+            launch_arguments={
+                'use_sim_time': 'false',
+            }.items()
+        )
+    
+    return LaunchDescription([
+        rviz_arg,
+        rviz_node,
+        launch_slam,
+    ])

@@ -2,43 +2,26 @@ import os
 import yaml
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
-from launch.substitutions import LaunchConfiguration, Command
-from launch.actions import IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription
+from launch.substitutions import LaunchConfiguration, Command, PathJoinSubstitution
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
 from launch_ros.parameter_descriptions import ParameterValue
 from launch.conditions import LaunchConfigurationEquals
 
-
-def generate_launch_description():
-
-    # --------------------------------------------------
-    # Package paths (MUST be string, not PosixPath)
-    # --------------------------------------------------
-    description_pkg = get_package_share_directory('fwdsrover_description')
-    bringup_pkg     = get_package_share_directory('fwdsrover_xna_bringup')
-
-  
-    rover_arg = DeclareLaunchArgument(
-        'rover',
-        default_value='x40a',
-        description='Rover type: x40a or x120a'
-    )
-
-def generate_launch_description():
-
-    # --------------------------------------------------
-    # Package paths (string paths)
-    # --------------------------------------------------
-    description_pkg = get_package_share_directory('fwdsrover_description')
-    bringup_pkg     = get_package_share_directory('fwdsrover_xna_bringup')
-
 configurable_parameters = [
     {'name': 'rover',       'default': 'x40a', 'description': 'model of rover', 'choices': "'x40a', 'x120a'"},
 ]
+
+def generate_launch_description():
+
+    # --------------------------------------------------
+    # Package paths (convert Path -> str)
+    # --------------------------------------------------
+    desc_pkg = str(get_package_share_path('fwdsrover_description'))
+    bringup_pkg = str(get_package_share_path('fwdsrover_xna_bringup'))
+
 
 
 def declare_configurable_parameters(parameters):
@@ -101,10 +84,10 @@ def launch_setup(context, params, param_name_suffix=''):
             name='pub_odom'
         ),
 
-#        IncludeLaunchDescription(
-#            PythonLaunchDescriptionSource(
-#               os.path.join(get_package_share_directory('mecanumrover3_bringup'), 'launch', 'ydlidar_tg30_launch.py')),
-#        ),
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+               os.path.join(get_package_share_directory('fwdsrover_xna_bringup'), 'launch', 'ydlidar_tg30_launch.py')),
+        ),
 
     ]
 
@@ -114,4 +97,3 @@ def generate_launch_description():
         OpaqueFunction(function=launch_setup, kwargs={
                        'params': set_configurable_parameters(configurable_parameters)})
     ])
-
