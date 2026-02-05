@@ -1,0 +1,3 @@
+[submodule "fwdsrover_description"]
+	path = fwdsrover_description
+	url = https://github.com/vstoneofficial/fwdsrover_description.git
