@@ -121,31 +121,6 @@
 
 このパッケージには、以下の主要な機能が含まれています。（詳細は各ファイルを確認してください）
 
-### 時刻同期（use_sim_time）の方針
-実機とGazeboでは、`use_sim_time` の扱いが異なります。混在させると `tf` やセンサ時刻不整合の原因になるため、以下を守ってください。
-
-- 実機（`fwdsrover_xna_bringup` / `fwdsrover_xna_navigation`）  
-  既定値は `use_sim_time=false` です。実機で起動する場合は `true` にしないでください。
-
-- Gazebo（`fwdsrover_xna_gazebo`）  
-  既定値は `use_sim_time=true` です。通常は引数を省略してそのまま使用してください。
-
-- 参考（明示指定したい場合）  
-  実機ナビ: `ros2 launch fwdsrover_xna_navigation navigation.launch.py rover:=x40a use_sim_time:=false`  
-  Gazeboナビ: `ros2 launch fwdsrover_xna_gazebo gazebo_nav.launch.py rover:=x40a use_sim_time:=true`
-
-### ローバータイプ引数（rover）の使い方
-本READMEの多くのコマンドは `x40a` で記載していますが、`rover` 引数でローバータイプを切り替えできます。
-
-- 指定可能値: `x40a` / `x120a`
-- 指定方法: `rover:=x40a` または `rover:=x120a`
-- 例（URDF表示）:
-  `ros2 launch fwdsrover_description display.launch.py rover:=x120a`
-- 例（実機SLAM）:
-  `ros2 launch fwdsrover_xna_navigation slam.launch.py rover:=x120a`
-- 例（Gazeboナビ）:
-  `ros2 launch fwdsrover_xna_gazebo gazebo_nav.launch.py rover:=x120a wall:=Wall.stl map:=~/ros2_ws/src/fwdsrover_xna_ros2/fwdsrover_xna_gazebo/maps/YOUR_MAP_NAME.yaml`
-
 ### URDFモデルの表示  
 以下のコマンドを実行して、4WDSローバーのURDFモデルを表示します。
 rover:=x40aの部分は、使用しているロボットに合わせて変更してください。　対応モデル x40a/x120a
