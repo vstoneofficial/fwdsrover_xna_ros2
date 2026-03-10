@@ -27,7 +27,7 @@ def generate_launch_description():
                 PathJoinSubstitution([
                     FindPackageShare('fwdsrover_xna_navigation'),
                     'launch',
-                    'online_async_launch.py'
+                    'internal/slam_async.launch.py'
                 ])
             ]),
             launch_arguments={
@@ -40,3 +40,4 @@ def generate_launch_description():
         rviz_node,
         launch_slam,
     ])
+

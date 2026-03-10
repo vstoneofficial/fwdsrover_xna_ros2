@@ -1,27 +1,44 @@
-import os
+﻿import os
 import subprocess
 import tempfile
-from launch import LaunchDescription
-from launch.actions import (DeclareLaunchArgument, ExecuteProcess, LogInfo, OpaqueFunction, RegisterEventHandler, SetLaunchConfiguration,)
-from launch.event_handlers import OnShutdown
-from launch.substitutions import LaunchConfiguration, FindExecutable
-from launch_ros.actions import Node
+
 from ament_index_python.packages import get_package_share_directory
+from launch import LaunchDescription
+from launch.actions import (
+    DeclareLaunchArgument,
+    ExecuteProcess,
+    LogInfo,
+    OpaqueFunction,
+    RegisterEventHandler,
+    SetLaunchConfiguration,
+)
+from launch.event_handlers import OnShutdown
+from launch.substitutions import Command, FindExecutable, LaunchConfiguration
+from launch_ros.actions import Node
 
 
-def _safe_kill_gazebo(context, *args, **kwargs):
+def _check_no_running_gazebo(context, *args, **kwargs):
     has_gzserver = subprocess.run(
         ["pgrep", "gzserver"], stdout=subprocess.DEVNULL
     ).returncode == 0
     has_gzclient = subprocess.run(
         ["pgrep", "gzclient"], stdout=subprocess.DEVNULL
     ).returncode == 0
+    port_in_use = subprocess.run(
+        ["bash", "-lc", "ss -lnt | grep -q ':11345'"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    ).returncode == 0
 
-    if has_gzserver or has_gzclient:
-        os.system("killall -9 gzserver gzclient 2>/dev/null")
+    # 既存Gazeboやマスター用ポート占有がある場合は即中断する。
+    # （起動継続すると /spawn_entity 不達で誤動作するため）
+    if has_gzserver or has_gzclient or port_in_use:
+        raise RuntimeError(
+            "[gazebo_bringup] 既存Gazeboまたは11345ポート占有を検出。"
+            "重複起動を解消してから再実行してください。"
+        )
 
-    os.system("rm -f /tmp/.gazebo/lock")
-    return [LogInfo(msg="[gazebo_bringup] Safe kill done (no chain events)")]
+    return [LogInfo(msg="[gazebo_bringup] No existing Gazebo process detected.")]
 
 
 def _make_world_with_state(context, *args, **kwargs):
@@ -51,6 +68,7 @@ def _make_world_with_state(context, *args, **kwargs):
   </world>
 </sdf>
 """
+
     fd, path = tempfile.mkstemp(prefix="fwdsrover_world_", suffix=".world")
     with os.fdopen(fd, "w") as f:
         f.write(world_xml)
@@ -66,7 +84,7 @@ def _create_urdf_and_rsp(context, *args, **kwargs):
 
     urdf_dir = os.path.join(
         get_package_share_directory("fwdsrover_description"),
-        "urdf"
+        "urdf",
     )
 
     if rover == "x40a":
@@ -82,14 +100,21 @@ def _create_urdf_and_rsp(context, *args, **kwargs):
         output="screen",
     )
 
-    rsp = ExecuteProcess(
-        cmd=[
-            "ros2", "run",
-            "robot_state_publisher",
-            "robot_state_publisher",
-            urdf_path
-        ],
+    # gazebo_ros2_control からも安定して参照できるように
+    # robot_description パラメータを明示的に渡す。
+    rsp = Node(
+        package="robot_state_publisher",
+        executable="robot_state_publisher",
+        name="robot_state_publisher",
         output="screen",
+        parameters=[
+            {
+                "robot_description": Command(
+                    [FindExecutable(name="xacro"), " ", xacro_file]
+                ),
+                "use_sim_time": True,
+            }
+        ],
     )
 
     return [
@@ -97,6 +122,24 @@ def _create_urdf_and_rsp(context, *args, **kwargs):
         LogInfo(msg=f"[gazebo_bringup] generated temp urdf: {urdf_path}"),
         gen,
         rsp,
+    ]
+
+
+def _resolve_spawn_z(context, *args, **kwargs):
+    rover = LaunchConfiguration("rover").perform(context)
+    spawn_z_arg = LaunchConfiguration("spawn_z").perform(context).strip()
+
+    # 引数が未指定の場合のみ車種別既定値を適用する。
+    if spawn_z_arg:
+        spawn_z = spawn_z_arg
+    elif rover == "x120a":
+        spawn_z = "0.12"
+    else:
+        spawn_z = "0.03"
+
+    return [
+        SetLaunchConfiguration("spawn_z", spawn_z),
+        LogInfo(msg=f"[gazebo_bringup] spawn z for {rover}: {spawn_z}"),
     ]
 
 
@@ -119,11 +162,12 @@ def generate_launch_description():
     gui = LaunchConfiguration("gui")
     world_path = LaunchConfiguration("world_path")
     urdf_path = LaunchConfiguration("urdf_path")
+    spawn_z = LaunchConfiguration("spawn_z")
 
-    safe_kill = OpaqueFunction(function=_safe_kill_gazebo)
+    check_no_running_gazebo = OpaqueFunction(function=_check_no_running_gazebo)
     make_world = OpaqueFunction(function=_make_world_with_state)
     create_urdf_and_rsp = OpaqueFunction(function=_create_urdf_and_rsp)
-
+    resolve_spawn_z = OpaqueFunction(function=_resolve_spawn_z)
     gazebo = ExecuteProcess(
         cmd=[
             "ros2", "launch", "gazebo_ros", "gazebo.launch.py",
@@ -135,39 +179,57 @@ def generate_launch_description():
 
     spawn = ExecuteProcess(
         cmd=[
-            "ros2", "run", "gazebo_ros", "spawn_entity.py",
-            "-entity", rover,
-            "-file", urdf_path,
-            "-z", "0.03"
+            "ros2",
+            "run",
+            "gazebo_ros",
+            "spawn_entity.py",
+            "-entity",
+            rover,
+            "-file",
+            urdf_path,
+            "-z",
+            spawn_z,
         ],
         output="screen",
     )
 
-    jsb = ExecuteProcess(
+    # 既にactiveなcontrollerは再設定せず、未起動なものだけ順次有効化する。
+    # group spawner は joint_state_broadcaster を active 後に再設定して
+    # exit 1 になることがあるため使用しない。
+    spawners_group = ExecuteProcess(
         cmd=[
-            "ros2", "run", "controller_manager", "spawner",
-            "joint_state_broadcaster",
+            "bash",
+            "-lc",
+            "sleep 12.0; "
+            "until ros2 control list_controllers >/dev/null 2>&1; do "
+            "echo '[gazebo_bringup] waiting for /controller_manager/list_controllers'; "
+            "sleep 1.0; "
+            "done; "
+            "if ros2 control list_controllers 2>/dev/null | grep -Eq 'joint_state_broadcaster\\s+active'; then "
+            "echo '[gazebo_bringup] joint_state_broadcaster already active'; "
+            "else "
+            "ros2 run controller_manager spawner joint_state_broadcaster "
+            "--controller-manager-timeout 120 "
+            "--service-call-timeout 120 || exit 1; "
+            "fi; "
+            "if ros2 control list_controllers 2>/dev/null | grep -Eq 'steer_position_controller\\s+active'; then "
+            "echo '[gazebo_bringup] steer_position_controller already active'; "
+            "else "
+            "ros2 run controller_manager spawner steer_position_controller "
+            "--controller-manager-timeout 120 "
+            "--service-call-timeout 120 || exit 1; "
+            "fi; "
+            "if ros2 control list_controllers 2>/dev/null | grep -Eq 'wheel_velocity_controller\\s+active'; then "
+            "echo '[gazebo_bringup] wheel_velocity_controller already active'; "
+            "else "
+            "ros2 run controller_manager spawner wheel_velocity_controller "
+            "--controller-manager-timeout 120 "
+            "--service-call-timeout 120 || exit 1; "
+            "fi",
         ],
         output="screen",
     )
 
-    wheel = ExecuteProcess(
-        cmd=[
-            "ros2", "run", "controller_manager", "spawner",
-            "wheel_velocity_controller",
-        ],
-        output="screen",
-    )
-
-    steer = ExecuteProcess(
-        cmd=[
-            "ros2", "run", "controller_manager", "spawner",
-            "steer_position_controller",
-        ],
-        output="screen",
-    )
-
-    # FIX: pass LaunchConfiguration("rover") into node parameters
     rover_twist_relay = Node(
         package="fwdsrover_description",
         executable="rover_twist_relay.py",
@@ -176,14 +238,14 @@ def generate_launch_description():
         parameters=[
             os.path.join(
                 get_package_share_directory("fwdsrover_description"),
-                "scripts",
+                "params",
                 "rover_twist_relay.yaml",
             ),
             {
                 "rover": rover,
                 "use_sim_time": True,
             },
-       ],
+        ],
     )
 
     gazebo_odom_bridge = Node(
@@ -202,21 +264,21 @@ def generate_launch_description():
         OnShutdown(on_shutdown=[OpaqueFunction(function=_cleanup_temp_files)])
     )
 
-    return LaunchDescription([
-        DeclareLaunchArgument("gui", default_value="true"),
-        DeclareLaunchArgument("rover", default_value="x40a"),
-        DeclareLaunchArgument("physics", default_value="ode"),
-
-        safe_kill,
-        make_world,
-        create_urdf_and_rsp,
-        gazebo,
-        spawn,
-        jsb,
-        wheel,
-        steer,
-        rover_twist_relay,
-        gazebo_odom_bridge,
-        on_shutdown_cleanup,
-    ])
-
+    return LaunchDescription(
+        [
+            DeclareLaunchArgument("gui", default_value="true"),
+            DeclareLaunchArgument("rover", default_value="x40a"),
+            DeclareLaunchArgument("physics", default_value="ode"),
+            DeclareLaunchArgument("spawn_z", default_value=""),
+            check_no_running_gazebo,
+            make_world,
+            create_urdf_and_rsp,
+            resolve_spawn_z,
+            gazebo,
+            spawn,
+            spawners_group,
+            rover_twist_relay,
+            gazebo_odom_bridge,
+            on_shutdown_cleanup,
+        ]
+    )

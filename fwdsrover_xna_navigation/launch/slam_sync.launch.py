@@ -26,22 +26,17 @@ def generate_launch_description():
                 PathJoinSubstitution([
                     FindPackageShare('fwdsrover_xna_navigation'),
                     'launch',
-                    'online_sync_launch.py'
+                    'internal/slam_sync.launch.py'
                 ])
             ]),
             launch_arguments={
                 'use_sim_time': 'false',
             }.items()
         )
-    
-    pub_odom_node = Node(
-        package='fwdsrover_xna_bringup',
-        executable='pub_odom',
-        name='pub_odom'
-    )
 
     return LaunchDescription([
         rviz_arg,
         rviz_node,
         launch_slam,
     ])
+
