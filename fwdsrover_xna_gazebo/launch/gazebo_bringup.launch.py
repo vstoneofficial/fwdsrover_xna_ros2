@@ -41,6 +41,61 @@ def _check_no_running_gazebo(context, *args, **kwargs):
     return [LogInfo(msg="[gazebo_bringup] No existing Gazebo process detected.")]
 
 
+def _cleanup_stale_gazebo(context, *args, **kwargs):
+    cleanup_enabled = LaunchConfiguration("cleanup_stale_gazebo").perform(context).strip().lower()
+    if cleanup_enabled not in ("1", "true", "yes", "on"):
+        return []
+
+    def _gazebo_in_use():
+        has_gzserver = subprocess.run(
+            ["pgrep", "-x", "gzserver"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        ).returncode == 0
+        has_gzclient = subprocess.run(
+            ["pgrep", "-x", "gzclient"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        ).returncode == 0
+        port_in_use = subprocess.run(
+            ["bash", "-lc", "ss -lnt | grep -q ':11345'"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        ).returncode == 0
+        return has_gzserver or has_gzclient or port_in_use
+
+    for _ in range(2):
+        subprocess.run(
+            ["pkill", "-TERM", "-x", "gzserver"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        subprocess.run(
+            ["pkill", "-TERM", "-x", "gzclient"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+
+        for _ in range(20):
+            if not _gazebo_in_use():
+                return [LogInfo(msg="[gazebo_bringup] Cleaned up stale Gazebo processes")]
+            subprocess.run(["bash", "-lc", "sleep 0.25"])
+
+    subprocess.run(
+        ["pkill", "-KILL", "-x", "gzserver"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    subprocess.run(
+        ["pkill", "-KILL", "-x", "gzclient"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    for _ in range(20):
+        if not _gazebo_in_use():
+            return [LogInfo(msg="[gazebo_bringup] Cleaned up stale Gazebo processes")]
+        subprocess.run(["bash", "-lc", "sleep 0.25"])
+
+    return [LogInfo(msg="[gazebo_bringup] Cleaned up stale Gazebo processes")]
+
+
 def _make_world_with_state(context, *args, **kwargs):
     physics_type = LaunchConfiguration("physics").perform(context)
     if physics_type not in ("ode", "bullet"):
@@ -87,10 +142,18 @@ def _create_urdf_and_rsp(context, *args, **kwargs):
         "urdf",
     )
 
-    if rover == "x40a":
-        xacro_file = os.path.join(urdf_dir, "x40a.xacro")
-    else:
-        xacro_file = os.path.join(urdf_dir, "x120a.xacro")
+    xacro_map = {
+        "x40a": "x40a.xacro",
+        "x120a": "x120a.xacro",
+        "x120a_lb": "x120a_lb.xacro",
+    }
+    if rover not in xacro_map:
+        raise RuntimeError(
+            f"[gazebo_bringup] Unsupported rover '{rover}'. "
+            "Use one of: x40a, x120a, x120a_lb"
+        )
+
+    xacro_file = os.path.join(urdf_dir, xacro_map[rover])
 
     fd, urdf_path = tempfile.mkstemp(prefix="robot_", suffix=".urdf")
     os.close(fd)
@@ -132,7 +195,7 @@ def _resolve_spawn_z(context, *args, **kwargs):
     # 引数が未指定の場合のみ車種別既定値を適用する。
     if spawn_z_arg:
         spawn_z = spawn_z_arg
-    elif rover == "x120a":
+    elif rover in ("x120a", "x120a_lb"):
         spawn_z = "0.12"
     else:
         spawn_z = "0.03"
@@ -168,6 +231,7 @@ def generate_launch_description():
     make_world = OpaqueFunction(function=_make_world_with_state)
     create_urdf_and_rsp = OpaqueFunction(function=_create_urdf_and_rsp)
     resolve_spawn_z = OpaqueFunction(function=_resolve_spawn_z)
+    cleanup_stale_gazebo = OpaqueFunction(function=_cleanup_stale_gazebo)
     gazebo = ExecuteProcess(
         cmd=[
             "ros2", "launch", "gazebo_ros", "gazebo.launch.py",
@@ -267,9 +331,15 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument("gui", default_value="true"),
-            DeclareLaunchArgument("rover", default_value="x40a"),
+            DeclareLaunchArgument("cleanup_stale_gazebo", default_value="true"),
+            DeclareLaunchArgument(
+                "rover",
+                default_value="x40a",
+                description="Rover type: x40a, x120a, x120a_lb",
+            ),
             DeclareLaunchArgument("physics", default_value="ode"),
             DeclareLaunchArgument("spawn_z", default_value=""),
+            cleanup_stale_gazebo,
             check_no_running_gazebo,
             make_world,
             create_urdf_and_rsp,

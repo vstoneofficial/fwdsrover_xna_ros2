@@ -28,7 +28,7 @@ slam_toolbox:
     min_laser_range: 0.4
     max_laser_range: 30.0
     minimum_time_interval: 0.1
-    transform_timeout: 0.35
+    transform_timeout: 0.1
     tf_buffer_duration: 30.0
     stack_size_to_use: 40000000
     enable_interactive_mode: true
@@ -45,7 +45,7 @@ slam_toolbox:
     link_match_minimum_response_fine: 0.1
     link_scan_maximum_distance: 1.5
     loop_search_maximum_distance: 5.0
-    do_loop_closing: false  # ループ閉じ込み。実機CPUが厳しい場合は false を優先。
+    do_loop_closing: true  # ループ閉じ込み。実機CPUが厳しい場合は false を優先。
     loop_match_minimum_chain_size: 10
     loop_match_maximum_variance_coarse: 3.0
     loop_match_minimum_response_coarse: 0.35

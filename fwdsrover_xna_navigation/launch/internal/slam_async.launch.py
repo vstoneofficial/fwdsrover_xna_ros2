@@ -29,7 +29,9 @@ def generate_launch_description():
         package='slam_toolbox',
         executable='async_slam_toolbox_node',
         name='slam_toolbox',
-        output='screen')
+        output='screen',
+        respawn=True,
+        respawn_delay=2.0)
 
     ld = LaunchDescription()
 

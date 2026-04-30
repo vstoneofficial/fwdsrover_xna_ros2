@@ -110,7 +110,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        DeclareLaunchArgument('rover', default_value='x40a', description='Rover type: x40a or x120a'),
+        DeclareLaunchArgument('rover', default_value='x40a', description='Rover type: x40a, x120a, x120a_lb'),
         DeclareLaunchArgument('use_sim_time', default_value='true'),
         DeclareLaunchArgument('gui', default_value='true'),
         DeclareLaunchArgument('wall', default_value='Wall.stl', description='Wall STL filename for static obstacle (set none to disable)'),
