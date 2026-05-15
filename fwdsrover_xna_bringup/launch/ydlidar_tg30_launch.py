@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+﻿#!/usr/bin/python3
 # Copyright 2020, EAIBOT
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,13 +24,13 @@ import os
 
 
 def generate_launch_description():
-    mecanumrover3_bringup_share_dir = get_package_share_directory('fwdsrover_xna_bringup')
+    fwdsrover_xna_bringup_share_dir = get_package_share_directory('fwdsrover_xna_bringup')
     parameter_file = LaunchConfiguration('params_file')
 
     params_declare = DeclareLaunchArgument('params_file',
                                            default_value=os.path.join(
-                                               mecanumrover3_bringup_share_dir, 'params', 'TG30.yaml'),
-                                           description='FPath to the ROS2 parameters file to use.')
+                                               fwdsrover_xna_bringup_share_dir, 'params', 'TG30.yaml'),
+                                           description='Path to the ROS2 parameters file to use.')
 
     driver_node = LifecycleNode(package='ydlidar_ros2_driver',
                                 executable='ydlidar_ros2_driver_node',
@@ -51,3 +51,4 @@ def generate_launch_description():
         driver_node,
         tf2_node,  # not required, since static_transform_publisher is published by description launch file
     ])
+

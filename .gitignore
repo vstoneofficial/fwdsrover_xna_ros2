@@ -6,3 +6,5 @@ log/
 **/*.pyc
 **/.vscode/
 **/.idea/
+fwdsrover_xna_Isaac/
+**/*.bak_*

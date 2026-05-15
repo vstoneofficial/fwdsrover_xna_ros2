@@ -92,7 +92,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'rover',
             default_value='x40a',
-            description='Rover type (x40a or x120a)'
+            description='Rover type (x40a, x120a, x120a_lb)'
         ),
 
         DeclareLaunchArgument(
@@ -112,4 +112,3 @@ def generate_launch_description():
         spawn_wall,
         slam,
     ])
-
