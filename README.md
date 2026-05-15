@@ -89,12 +89,15 @@
 3. このリポジトリをワークスペースにクローンしてください:
 
    ```bash
+   $ source /opt/ros/humble/setup.bash
    $ mkdir -p ~/ros2_ws/src
    $ cd ~/ros2_ws/src
    $ git clone https://github.com/vstoneofficial/fwdsrover_xna_ros2.git
-   $ git clone -b $ROS_DISTRO https://github.com/vstoneofficial/vs_rover_options_description.git
+   $ git clone https://github.com/vstoneofficial/vs_rover_options_description.git
+   $ sudo apt update
    $ sudo xargs -a ~/ros2_ws/src/fwdsrover_xna_ros2/packages.txt apt install -y
-   $ rosdep install -r --from-paths . --ignore-src --rosdistro $ROS_DISTRO -y
+   $ rosdep update
+   $ rosdep install -r --from-paths . --ignore-src --rosdistro humble -y
    ```
 
 4. ワークスペースをビルド:
