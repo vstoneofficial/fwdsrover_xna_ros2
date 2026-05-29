@@ -1,10 +1,10 @@
-# 4WDSローバーX40A/X120A ROS2パッケージ
+# 4WDSローバーX40A/X120A/X120A-LB ROS2パッケージ
 
 <p align="center">
   <img src="./images/x40a.jpg" width="600" />
 </p>
 
-ヴイストン株式会社より発売されている全方向移動台車「[4WDSローバーX40A](https://www.vstone.co.jp/products/wheelrobot/x40a.html)」等をROS 2で制御するためのパッケージです。別途Linux搭載のPC及びロボット実機が必要になります。
+ヴイストン株式会社より発売されている全方向移動台車「[4WDSローバーX40A](https://www.vstone.co.jp/products/wheelrobot/x40a.html)」等をROS 2で制御するためのパッケージです。X120A-LBを使用する場合、launch引数には `rover:=x120a_lb`（アンダースコア）を指定してください。別途Linux搭載のPC及びロボット実機が必要になります。
 
 # 目次
 <!-- TOC -->
@@ -44,6 +44,9 @@
 - 4WDSローバーX120A:
   - 製品ページ: [https://www.vstone.co.jp/products/wheelrobot/x120a.html](https://www.vstone.co.jp/products/wheelrobot/x120a.html)
   - 販売ページ: [https://www.vstone.co.jp/robotshop/index.php?main_page=product_info&products_id=5367](https://www.vstone.co.jp/robotshop/index.php?main_page=product_info&products_id=5367)
+- 4WDSローバーX120A-LB:
+  - 製品ページ: [https://www.vstone.co.jp/products/wheelrobot/x120a_lb.html](https://www.vstone.co.jp/products/wheelrobot/x120a_lb.html)
+  - 販売ページ: [https://www.vstone.co.jp/robotshop/index.php?main_page=product_info&products_id=5420](https://www.vstone.co.jp/robotshop/index.php?main_page=product_info&products_id=5420)
 - Ubuntu Linux - Jammy Jellyfish (22.04)
 - ROS 2 Humble Hawksbill
 
@@ -126,7 +129,7 @@
 
 ### URDFモデルの表示  
 以下のコマンドを実行して、4WDSローバーのURDFモデルを表示します。
-rover:=x40aの部分は、使用しているロボットに合わせて変更してください。　対応モデル x40a/x120a
+rover:=x40aの部分は、使用しているロボットに合わせて変更してください。　対応モデル x40a/x120a/x120a_lb
    ```
    ros2 launch fwdsrover_description display.launch.py rover:=x40a
    ```
@@ -144,7 +147,7 @@ ROS 2とMicro-ROSを統合するためのエージェントノードを起動し
    ```
 
 ### odometryをpublish
-   pub_odomノードとrviz上可視化
+   pub_odomノードとrviz上可視化。X120A-LB (`rover:=x120a_lb`) の場合は、`rover_odom_pose` を入力にする `pub_odom_pose` ノードが起動します。
    ```
    ros2 launch fwdsrover_xna_bringup robot.launch.py rover:=x40a
    ```
@@ -184,7 +187,7 @@ fwdsrover_description/urdf/x40a.xacroに定義されている各種オプショ�
 3. 反映確認
    設定を保存後、以下のコマンドでURDFモデルを確認できます。
    RViz2上でLRF（TG30）が表示されていれば、有効化が正しく反映されています。
-   rover:=x40aの部分は、使用しているロボットに合わせて変更してください。　対応モデル x40a/x120a
+   rover:=x40aの部分は、使用しているロボットに合わせて変更してください。　対応モデル x40a/x120a/x120a_lb
 
       ```
       ros2 launch fwdsrover_description display.launch.py rover:=x40a
@@ -195,7 +198,7 @@ fwdsrover_description/urdf/x40a.xacroに定義されている各種オプショ�
 ToolboxはROS2のナビゲーション機（Nav2）と一緒に使える標準的なパッケージです。  
 現在も活発に更新が続いており、広い範囲での地図作成やループ修正にも対応しています。  
 実際にロボットを動かす場面ではこのパッケージの利用を推奨します。
-以下のコマンドは `rover:=x40a` を `rover:=x120a` に変更して利用できます。
+以下のコマンドは `rover:=x40a` を `rover:=x120a` または `rover:=x120a_lb` に変更して利用できます。
   
 1. LRFオプションTG30
 - [ydlidar_ros2_driver](https://github.com/YDLIDAR/ydlidar_ros2_driver.git)を`src`フォルダにクローンして、buildしてください。  
@@ -238,7 +241,7 @@ ToolboxはROS2のナビゲーション機（Nav2）と一緒に使える標準�
 
 ### Navigation2を使用したナビゲーション
 #### Nav2パッケージをインストールする。
-以下のコマンドは `rover:=x40a` を `rover:=x120a` に変更して利用できます。
+以下のコマンドは `rover:=x40a` を `rover:=x120a` または `rover:=x120a_lb` に変更して利用できます。
 
    ```
    sudo apt install ros-humble-navigation2
@@ -257,7 +260,7 @@ ToolboxはROS2のナビゲーション機（Nav2）と一緒に使える標準�
       'maps',
       'YOUR_MAP_NAME.yaml'))
       ```
-1. ロボット実機と通信できたら、以下のコマンドでpub_odom、ロボットのurdf表示、LiDAR関連のlaunchファイルを起動します。  
+1. ロボット実機と通信できたら、以下のコマンドでodometry publisher、ロボットのurdf表示、LiDAR関連のlaunchファイルを起動します。  
    ```
    ros2 launch fwdsrover_xna_bringup nav_robot.launch.py rover:=x40a
    ```
@@ -270,6 +273,7 @@ ToolboxはROS2のナビゲーション機（Nav2）と一緒に使える標準�
 
    4WDSローバー用のNavigation2のパラメータは`fwdsrover_xna_navigation`パッケージの[`config`](./fwdsrover_xna_navigation/config/) フォルダにあります。  
 roverタイプごとにパラメータファイルが分かれていますので、使用しているロボットに合わせて調整してください。
+X120A-LB (`rover:=x120a_lb`) では、`nav_robot.launch.py` が `pub_odom_pose` を起動し、`rover_odom_pose` と `rover_odom_twist` から `/odom` を配信します。
 
 > **Warning**  
    > ナビゲーションを行う場合、移動命令のrover_twistトピックが競合しないようにするため、rover_twistをpublishするノードは起動しないでください。  
@@ -289,7 +293,7 @@ roverタイプごとにパラメータファイルが分かれていますので
 
 
 ### gazeboでシミュレーションする。
-以下のコマンドは `rover:=x40a` を `rover:=x120a` に変更して利用できます。
+以下のコマンドは `rover:=x40a` を `rover:=x120a` または `rover:=x120a_lb` に変更して利用できます。
 
 - 空のワールドを起動する  
 床とロボットモデルのみ存在するベースワールドになります。他プログラムと連携する際に利用することを想定したlaunchファイルです。

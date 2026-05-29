@@ -13,7 +13,7 @@ CONFIGURABLE_PARAMETERS = [
         'name': 'rover',
         'default': 'x40a',
         'description': 'model of rover',
-        'choices': "'x40a', 'x120a'",
+        'choices': ['x40a', 'x120a', 'x120a_lb'],
     },
 ]
 
@@ -36,16 +36,19 @@ def set_configurable_parameters(parameters):
 
 def launch_setup(context, params, param_name_suffix=''):
     rover_type = LaunchConfiguration('rover').perform(context)
+    model_rover_type = rover_type
+    rviz_rover_type = 'x120a' if model_rover_type == 'x120a_lb' else model_rover_type
+    odom_executable = 'pub_odom_pose' if model_rover_type == 'x120a_lb' else 'pub_odom'
 
     robot_description_path = os.path.join(
         get_package_share_directory('fwdsrover_description'),
         'urdf',
-        f'{rover_type}.xacro',
+        f'{model_rover_type}.xacro',
     )
     rviz_config_path = os.path.join(
         get_package_share_directory('fwdsrover_xna_bringup'),
         'rviz',
-        f'{rover_type}.rviz',
+        f'{rviz_rover_type}.rviz',
     )
 
     return [
@@ -76,8 +79,8 @@ def launch_setup(context, params, param_name_suffix=''):
         ),
         Node(
             package='fwdsrover_xna_bringup',
-            executable='pub_odom',
-            name='pub_odom',
+            executable=odom_executable,
+            name=odom_executable,
         ),
     ]
 

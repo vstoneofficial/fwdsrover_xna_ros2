@@ -15,6 +15,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument('namespace', default_value=''),
+        DeclareLaunchArgument('rover', default_value='x40a', description='Rover type: x40a, x120a, or x120a_lb'),
         DeclareLaunchArgument('use_namespace', default_value='false'),
         DeclareLaunchArgument('slam', default_value='False'),
         DeclareLaunchArgument('map', default_value=''),
@@ -32,6 +33,7 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(nav_launch),
             launch_arguments={
                 'namespace': LaunchConfiguration('namespace'),
+                'rover': LaunchConfiguration('rover'),
                 'use_namespace': LaunchConfiguration('use_namespace'),
                 'slam': LaunchConfiguration('slam'),
                 'map': LaunchConfiguration('map'),

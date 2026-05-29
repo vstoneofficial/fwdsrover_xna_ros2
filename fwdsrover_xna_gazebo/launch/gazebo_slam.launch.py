@@ -76,6 +76,7 @@ def generate_launch_description():
         ),
         launch_arguments={
             'rvizconfig': rviz_config,
+            'rover': rover,
         }.items()
     )
 
@@ -92,7 +93,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'rover',
             default_value='x40a',
-            description='Rover type (x40a, x120a, x120a_lb)'
+            description='Rover type: x40a, x120a, x120a_lb'
         ),
 
         DeclareLaunchArgument(

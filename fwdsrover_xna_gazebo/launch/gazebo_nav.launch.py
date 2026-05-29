@@ -91,6 +91,7 @@ def generate_launch_description():
         launch_arguments={
             'map': map_file,
             'params_file': auto_params_file,
+            'rover': rover,
             'use_sim_time': use_sim_time,
         }.items()
     )

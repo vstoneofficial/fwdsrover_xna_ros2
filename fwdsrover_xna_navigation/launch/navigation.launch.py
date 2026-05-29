@@ -109,7 +109,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        DeclareLaunchArgument('rover', default_value='x40a', description='Rover type: x40a or x120a'),
+        DeclareLaunchArgument('rover', default_value='x40a', description='Rover type: x40a, x120a, or x120a_lb'),
         DeclareLaunchArgument('namespace', default_value='', description='Top-level namespace'),
         DeclareLaunchArgument('use_namespace', default_value='false', description='Whether to apply namespace'),
         DeclareLaunchArgument('slam', default_value='false', description='Whether to run SLAM'),

@@ -27,6 +27,16 @@ ament_target_dependencies(
   tf2
 )
 
+# pub_odom_pose
+add_executable(pub_odom_pose src/pub_odom_pose.cpp)
+ament_target_dependencies(
+  pub_odom_pose
+  rclcpp
+  geometry_msgs
+  nav_msgs
+  tf2_ros
+)
+
 # rover_gamepad
 add_executable(rover_gamepad src/rover_gamepad.cpp)
 ament_target_dependencies(
@@ -60,6 +70,7 @@ ament_target_dependencies(
 
 install(TARGETS
   pub_odom
+  pub_odom_pose
   rover_gamepad
   rover_gamepad_tty
   gazebo_odom_bridge

@@ -13,6 +13,10 @@ def generate_launch_description():
 
     rviz_arg = DeclareLaunchArgument(name='rvizconfig', default_value=str(rviz_config_path),
                                     description='Absolute path to rviz config file')
+    rover_arg = DeclareLaunchArgument(
+        name='rover',
+        default_value='x40a',
+        description='Accepted for consistency with robot/navigation launch files')
 
     rviz_node = Node(
         package='rviz2',
@@ -37,6 +41,7 @@ def generate_launch_description():
     
     return LaunchDescription([
         rviz_arg,
+        rover_arg,
         rviz_node,
         launch_slam,
     ])
